@@ -1,0 +1,59 @@
+[build-system]
+requires = ["hatchling>=1.21"]
+build-backend = "hatchling.build"
+
+[project]
+name = "langchain-scrapewise"
+version = "0.1.0"
+description = "LangChain tools for the ScrapeWise web-scraping and price-monitoring API."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "BEBOTECH OÜ", email = "hello@scrapewise.ai" }]
+maintainers = [{ name = "BEBOTECH OÜ", email = "hello@scrapewise.ai" }]
+keywords = [
+  "langchain",
+  "scrapewise",
+  "agents",
+  "tools",
+  "web-scraping",
+  "price-monitoring",
+  "ecommerce",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Internet :: WWW/HTTP",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Typing :: Typed",
+]
+dependencies = [
+  "langchain-core>=0.3,<0.4",
+  "scrapewise>=0.1,<1",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7.4"]
+
+[project.urls]
+Homepage = "https://scrapewise.ai"
+Documentation = "https://scrapewise.ai"
+Repository = "https://github.com/BEBOTECH-OU/scrapewise-python"
+Issues = "https://github.com/BEBOTECH-OU/scrapewise-python/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["langchain_scrapewise"]
+
+[tool.hatch.build.targets.sdist]
+include = ["langchain_scrapewise", "README.md", "LICENSE", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

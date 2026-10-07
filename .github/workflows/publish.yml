@@ -1,0 +1,72 @@
+name: publish
+
+# Releases are driven by tags shaped "<package>-v<version>", e.g.
+# "scrapewise-v0.1.0" or "langchain-scrapewise-v0.1.0". The package directory is
+# taken from the tag, so one workflow serves both packages — which also means a
+# single Trusted Publisher entry per PyPI project, both naming publish.yml.
+on:
+  push:
+    tags:
+      - "scrapewise-v*"
+      - "langchain-scrapewise-v*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    # Trusted Publishing: PyPI accepts this job because of the short-lived OIDC
+    # token minted here, so no API token is stored in this repo or anywhere else.
+    environment: pypi
+    permissions:
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Resolve package and version from the tag
+        id: tag
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          pkg="${tag%-v*}"
+          ver="${tag##*-v}"
+          if [ ! -d "$pkg" ]; then
+            echo "::error::tag '$tag' names package '$pkg', which is not a directory in this repo"
+            exit 1
+          fi
+          echo "pkg=$pkg" >> "$GITHUB_OUTPUT"
+          echo "ver=$ver" >> "$GITHUB_OUTPUT"
+
+      # A published version can never be replaced on PyPI, so a tag that
+      # disagrees with pyproject.toml must stop the release here rather than
+      # burn the version number on a wrong artefact.
+      - name: Check the tag matches pyproject.toml
+        run: |
+          declared=$(python -c "
+          import sys, tomllib
+          with open('${{ steps.tag.outputs.pkg }}/pyproject.toml','rb') as fh:
+              print(tomllib.load(fh)['project']['version'])
+          ")
+          if [ "$declared" != "${{ steps.tag.outputs.ver }}" ]; then
+            echo "::error::tag says ${{ steps.tag.outputs.ver }}, pyproject.toml says $declared"
+            exit 1
+          fi
+          echo "version $declared confirmed"
+
+      - name: Run that package's tests
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e "./${{ steps.tag.outputs.pkg }}[test]"
+          python -m pytest "${{ steps.tag.outputs.pkg }}/tests" -q
+
+      - name: Build
+        run: |
+          python -m pip install build
+          python -m build --outdir dist "${{ steps.tag.outputs.pkg }}"
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist
